@@ -1,0 +1,26 @@
+doctype html
+html(lang='en')
+	head
+		meta(charset='utf-8')
+		meta(http-equiv='X-UA-Compatible', content='IE=edge')
+		meta(name='viewport', content='width=device-width, initial-scale=1')
+		meta(name='description', content='Game of Three')
+		meta(name='author', content='ssinha')
+		title Game of Three
+
+		link(href='/styles/materialize.css', rel='stylesheet')
+	body
+
+		game-of-three(init-data= data) please wait...
+
+		script(src='/scripts/jquery.js')
+		script(src='/scripts/materialize.js')
+
+		script(src='/app/node_modules/zone.js/dist/zone.min.js')
+		script(src='/app/node_modules/reflect-metadata/Reflect.js')
+		script(src='/app/node_modules/systemjs/dist/system.src.js')
+		script(src='/app/system.config.js')
+		script.
+			System.import("app").catch(function(err){
+				console.error(err);
+			});
