@@ -32,7 +32,8 @@ module.exports = function(app, games) {
 				players: {
 					p1: game.players.p1.name,
 					p2: game.players.p2.name
-				}
+				},
+				finished: game.finished
 			},
 			identifier: identifierInt
 		};

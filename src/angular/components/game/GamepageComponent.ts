@@ -1,4 +1,5 @@
 import {Component} from "@angular/core";
+import {Router} from "@angular/router";
 import {ApplicationDataHelper} from "../../helpers/data/ApplicationDataHelper";
 import {NetworkRequestHelper} from "../../helpers/network/NetworkRequestHelper";
 
@@ -20,13 +21,16 @@ import {NetworkRequestHelper} from "../../helpers/network/NetworkRequestHelper";
 					</div>
 				</div>
 				<div class="btn-container">
-					<button class="waves-effect waves-light btn btn-large">-1</button>
-					<button class="waves-effect waves-light btn btn-large">0</button>
-					<button class="waves-effect waves-light btn btn-large">+1</button>
+					<button class="waves-effect waves-light btn btn-large" (click)="onContinue($event, -1)">-1</button>
+					<button class="waves-effect waves-light btn btn-large" (click)="onContinue($event, 0)">0</button>
+					<button class="waves-effect waves-light btn btn-large" (click)="onContinue($event, 1)">+1</button>
 				</div>
 			</div>
 		</div>
-		<div class="mask" *ngIf="!data.game.myTurn"><span>Waiting for second player...</span></div>
+		<div class="mask {{ loadingClass }}" *ngIf="!data.game.myTurn">
+			<span>{{ loadingMessage }}</span>
+			<span *ngIf="loadingClass">Click <a href="javascript:void(0)" (click)="onRestartClick($event)">here</a> to restart the game.</span>
+		</div>
 	`
 	styles: [`
 		.player-entry {
@@ -102,6 +106,10 @@ import {NetworkRequestHelper} from "../../helpers/network/NetworkRequestHelper";
 			font-size: 16px;
 			z-index: 10;
 		}
+		.mask.no-image {
+			background-image: none;
+			background: rgba(53, 53, 53, 0.78);
+		}
 		.btn-container {
 			position: absolute;
 			bottom: 23px;
@@ -118,19 +126,92 @@ export class GamepageComponent {
 
 	data: Object;
 
+	loadingClass: String;
+
+	loadingMessage: String;
+
 	dataHelper: ApplicationDataHelper;
 
-	constructor(private networkHelper: NetworkRequestHelper) {
+	constructor(private router: Router,
+				private networkHelper: NetworkRequestHelper) {
+		
 		this.dataHelper = ApplicationDataHelper.getInstance();
+		this.loadingMessage = "Waiting for second player...";
+		this.loadingClass = null;
+
 		this.data = {
 			game: this.dataHelper.getData("game"),
 			gameId: this.dataHelper.getData("gameId"),
 			identifier: this.dataHelper.getData("identifier")
 		};
 
-		setTimeout(() => {
-			this.serverLookup(this);
-		}, 5000);
+		if (!this.data.game.finished) {
+			setTimeout(() => {
+				this.serverLookup(this);
+			}, 5000);
+		}
+	}
+
+	/**
+	 * function called when restart link is clicked
+	 * @param $event {Object} event information
+	 */
+	onRestartClick($event) {
+		this.router.navigateByUrl("/");
+	}
+
+	/**
+	 * function called when buttons are clicked
+	 * @param $event {Object} event information
+	 * @param number {Number} number to add 
+	 */
+	onContinue($event, number) {
+
+		let turnLength = this.data.game.turns.length,
+			turn = this.data.game.turns[turnLength - 1];
+
+		let newNumber = number;
+		if (turn.p2 != null) {
+			newNumber += turn.p2;
+		} else if (turn.p1 != null) {
+			newNumber += turn.p1;
+		}
+
+		if (newNumber % 3 !== 0) {
+			alert("Sorry the final number should be divisble by 3!!!");
+			return;
+		} else {
+			newNumber = newNumber/3;
+		}
+
+		this.data.game.myTurn = false;
+		this.networkHelper.request({
+			url: "/game/" + this.data.gameId + "/play",
+			method: "POST",
+			parameters: {
+				value: newNumber,
+				identifier: this.data.identifier
+			},
+			callback: {
+				success: {
+					fn: this.onGameResponse, 
+					args: { scope: this }
+				},
+				error: {
+					fn: this.onGameResponse,
+					args: { scope: this }
+				}
+			}
+		});
+
+		
+		if (turn.p2 == null) {
+			turn.p2 = newNumber;
+		} else {
+			this.data.game.turns.push({
+				p1: newNumber;
+			})
+		}
 	}
 
 	private serverLookup(scope) {
@@ -158,9 +239,33 @@ export class GamepageComponent {
 	 * @param response {Object} response data
 	 * @param args {Object}
 	 */
-	private onServerResponse(response, args) {
+	private onGameResponse(response, args) {
 		let scope = args.scope,
 			json = {};
+
+		try { json = JSON.parse(response._body); } 
+		catch (e) {}
+
+		if (json.error) {
+			alert("Oh Snap!!! It seems we are not able to connect to game server.");
+		} else if (json.winner) {
+			alert("Hurray!!! Congratulation you are the winner");
+
+			scope.winner = true;
+			scope.loadingClass = "no-image";
+			scope.loadingMessage = "Hurray!!! Congratulation you are the winner";
+		}
+	}
+
+	/**
+	 * function called when we get network response
+	 * @param response {Object} response data
+	 * @param args {Object}
+	 */
+	private onServerResponse(response, args) {
+		let scope = args.scope,
+			json = {},
+			finished = false;
 
 		try { json = JSON.parse(response._body); } 
 		catch (e) {}
@@ -171,10 +276,22 @@ export class GamepageComponent {
 				key: "game", 
 				data: json.game
 			});
+
+			if (json.game.finished) {
+				finished = true;
+				scope.data.game.myTurn = false;
+
+				if (!scope.winner) {
+					scope.loadingClass = "no-image";
+					scope.loadingMessage = "Game Over!!! You lose.";
+				}
+			}
 		}
 
-		setTimeout(() => {
-			scope.serverLookup(scope);
-		}, 5000);
+		if (!finished) {
+			setTimeout(() => {
+				scope.serverLookup(scope);
+			}, 5000);
+		}
 	}
 }

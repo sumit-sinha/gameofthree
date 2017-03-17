@@ -22,4 +22,5 @@ app.route("/")
 let games = {};
 require("./routes/newGame")(app, games);
 require("./routes/gameUpdates")(app, games);
+require("./routes/gamePlay")(app, games);
 	
