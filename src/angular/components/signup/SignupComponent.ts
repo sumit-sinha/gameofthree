@@ -1,4 +1,7 @@
 import {Component} from "@angular/core";
+import { Router } from "@angular/router";
+import { NetworkRequestHelper } from "../../helpers/network/NetworkRequestHelper";
+import { ApplicationDataHelper } from "../../helpers/data/ApplicationDataHelper";
 
 @Component({
 	selector: "sign-up",
@@ -12,7 +15,7 @@ import {Component} from "@angular/core";
 				</div>
 				<div class="row">
 					<div class="input-field input-game-name-container">
-						<input placeholder="Name" type="text" class="validate" autofocus>
+						<input placeholder="Name" type="text" class="validate {{ errorClass }}" autofocus (blur)="onInputEvent($event)" (keyup)="onInputEvent($event)" >
 					</div>
 				</div>
 				<div class="row center">
@@ -36,20 +39,105 @@ import {Component} from "@angular/core";
 			text-align: center;
 		}
 
-		.input-game-name-container input:focus {
-			border-bottom: 1px solid #e4b77e;
-    		box-shadow: 0 1px 0 0 #e4b77e;
+		.input-game-name-container input.error{
+			background: #f7e0e0;
 		}
 	`]
 })
 
 export class SignupComponent {
 
+	name: String;
+
+	errorClass: String;
+
+	constructor(private router: Router, 
+				private networkHelper: NetworkRequestHelper) {}
+
 	/**
 	 * function called when get started button is clicked
 	 * @param $event {Object} event information
 	 */
 	onGetStarted($event) {
-		console.log("clicked");
+		if (this.isValidInput()) {
+			this.errorClass = null;
+		} else {
+			this.errorClass = "error";
+			return;
+		}
+
+		this.networkHelper.request({
+			url: "/game/new",
+			method: "POST",
+			parameters: {
+				name: this.name
+			},
+			callback: {
+				success: {
+					fn: this.onNewGameCallback, 
+					args: { scope: this }
+				},
+				error: {
+					fn: this.onNewGameCallback,
+					args: { scope: this }
+				}
+			}
+		});
+	}
+
+	/**
+	 * function called when blur or any key event happen on input element
+	 * @param $event {Object} event information
+	 */
+	onInputEvent($event) {
+		this.name = $event.target.value;
+		if (this.isValidInput()) {
+			this.errorClass = null;
+		} else {
+			this.errorClass = "error";
+		}
+	}
+
+	/**
+	 * function called when we get network response
+	 * @param response {Object} response data
+	 * @param args {Object}
+	 */
+	private onNewGameCallback(response, args) {
+		let scope = args.scope,
+			json = {};
+
+		try { json = JSON.parse(response._body); } 
+		catch (e) {}
+
+		if (json.id == null) {
+			alert("Oh Snap!!! It seems we have issue coonecting to game server.")
+		} else {
+
+			ApplicationDataHelper.getInstance().setData({
+				key: "game", 
+				data: json.game
+			});
+
+			ApplicationDataHelper.getInstance().setData({
+				key: "gameId", 
+				data: json.id
+			});
+
+			ApplicationDataHelper.getInstance().setData({
+				key: "identifier", 
+				data: json.identifier
+			});
+
+			scope.router.navigateByUrl("/game/" + json.id);
+		}
+	}
+
+	/**
+	 * check if name is not empty
+	 * @return {Boolean} i.e. true or false
+	 */
+	private isValidInput() {
+		return this.name != null && this.name.trim() !== "";
 	}
 }

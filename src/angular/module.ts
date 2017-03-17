@@ -7,6 +7,7 @@ import { platformBrowserDynamic } from "@angular/platform-browser-dynamic";
 
 import { IndexPageComponent } from "./pages/index/IndexPageComponent";
 import { SignupComponent } from "./components/signup/SignupComponent";
+import { GamepageComponent } from "./components/game/GamepageComponent";
 import { NetworkRequestHelper } from "./helpers/network/NetworkRequestHelper";
 
 @NgModule({
@@ -16,11 +17,15 @@ import { NetworkRequestHelper } from "./helpers/network/NetworkRequestHelper";
 		RouterModule.forRoot([{
 			path: "",
 			component: SignupComponent
+		}, {
+			path: "game/:id",
+			component: GamepageComponent
 		}])
 	],
 	declarations: [
 		IndexPageComponent,
-		SignupComponent
+		SignupComponent,
+		GamepageComponent
 	],
 	providers: [
 		{provide: APP_BASE_HREF, useValue : '/' }, 
