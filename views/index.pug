@@ -11,7 +11,8 @@ html(lang='en')
 		link(href='/styles/materialize.css', rel='stylesheet')
 	body
 
-		game-of-three(init-data= data) please wait...
+		game-of-three(init-data= data)
+			span(class='loading') Please wait...
 
 		script(src='/scripts/jquery.js')
 		script(src='/scripts/materialize.js')
