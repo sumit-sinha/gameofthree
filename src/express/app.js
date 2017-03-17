@@ -18,6 +18,10 @@ app.route("/")
 	.get((request, response) => {
 		response.render("index", {});
 	});
+app.route("/info")
+	.get((request, response) => {
+		response.render("index", {});
+	});
 
 let games = {};
 require("./routes/newGame")(app, games);
