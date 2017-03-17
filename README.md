@@ -12,3 +12,8 @@ The receiving player can now always choose between adding one of {­1, 0, 1} to 
 
 The same rules are applied until one player reaches the number 1 (after the division).
 
+[![N|Solid](http://52.35.208.145/images/game.png)](http://52.35.208.145/)
+
+### Working Demo
+
+A working demo of this application is hosted at http://52.35.208.145/
