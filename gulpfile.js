@@ -37,12 +37,12 @@ gulp.task('copy:libs', ['clean'], function() {
       'node_modules/rxjs/*.js'
     ])
     .pipe(gulp.dest(function(file) {
-      let separator = "/";
+      var separator = "/";
       if (file.path.indexOf(separator) === -1) {
         separator = "\\";
       }
 
-      let destinationFile = file.path.replace("node_modules", paths.dist + separator + "node_modules"),
+      var destinationFile = file.path.replace("node_modules", paths.dist + separator + "node_modules"),
           destinationFolder = destinationFile.substring(0, destinationFile.lastIndexOf(separator));
 
       return destinationFolder;
