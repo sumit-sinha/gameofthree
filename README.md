@@ -17,3 +17,7 @@ The same rules are applied until one player reaches the number 1 (after the divi
 ### Working Demo
 
 A working demo of this application is hosted at http://52.35.208.145/
+
+### Development
+
+To start this application open a command window (or terminal for mac) at root folder and run **npm run start**
